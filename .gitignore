@@ -1,3 +1,7 @@
+# Our data folder / Mac hidden file
+download
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
