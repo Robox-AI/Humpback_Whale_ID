@@ -124,7 +124,6 @@ mpld3.display()
 
 
 
-<div id="fig_el60174568329072166451424"></div>
 <script>
 function mpld3_load_lib(url, callback){
   var s = document.createElement('script');
