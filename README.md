@@ -122,9 +122,7 @@ mpld3.display()
 
 
 
-<style>
 
-</style>
 
 <div id="fig_el60174568329072166451424"></div>
 <script>
