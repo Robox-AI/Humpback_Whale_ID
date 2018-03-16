@@ -95,117 +95,48 @@ print(sorted(whale_dist.items()))
 
 ```python
 import matplotlib.pyplot as plt
-import mpld3
 
 N = len(whale_dist)
 vals = list(whale_dist.values())
 keys = list(whale_dist.keys())
 
-plt.figure(1, figsize=(10,7))
-barfig = plt.bar(range(N), vals, align='center')
-
-# Use mpld3 to add some interactivity:
-for i, bar in enumerate(barfig.get_children()):
-    tooltip = mpld3.plugins.LineLabelTooltip(bar, label=vals[i])
-    mpld3.plugins.connect(plt.gcf(), tooltip)
-
-# Make graph more readible:
-plt.xticks(range(N), keys)
+# Plot main bar graph:
+fig, ax1 = plt.subplots(figsize=(10,7))
 plt.title('Distribution of whale labels in the training set', fontsize=20)
-plt.xlabel('Number of images tagged', fontsize=15)
-plt.ylabel('Number of labels', fontsize=15)
-mpld3.display()
+ax1.bar(range(N), vals, align='center')
+ax1.set_xticks(range(N))
+ax1.set_xticklabels(keys)
+ax1.set_xlabel('Number of images tagged', fontsize=15)
+ax1.set_ylabel('Number of labels', fontsize=15)
+
+# Plot the inset:
+left, bottom, width, height = [0.32, 0.4, 0.56, 0.4]
+ax2 = fig.add_axes([left, bottom, width, height])
+ax2.bar(range(N), vals, align='center')
+ax2.set_xticks(range(N))
+ax2.set_xticklabels(keys)
+ax2.set_yscale('log')
+ax2.set_xlabel('Number of images tagged', fontsize=10)
+ax2.set_ylabel('Number of labels, log scale', fontsize=10)
 ```
 
 
 
 
+    Text(0,0.5,'Number of labels, log scale')
 
 
 
 
-<div id="fig_el618046616256886831320517"></div>
-<script>
-function mpld3_load_lib(url, callback){
-  var s = document.createElement('script');
-  s.src = url;
-  s.async = true;
-  s.onreadystatechange = s.onload = callback;
-  s.onerror = function(){console.warn("failed to load library " + url);};
-  document.getElementsByTagName("head")[0].appendChild(s);
-}
-
-if(typeof(mpld3) !== "undefined" && mpld3._mpld3IsLoaded){
-   // already loaded: just create the figure
-   !function(mpld3){
-       
-       mpld3.draw_figure("fig_el618046616256886831320517", {"plugins": [{"type": "reset"}, {"button": true, "enabled": false, "type": "zoom"}, {"button": true, "enabled": false, "type": "boxzoom"}], "data": {}, "width": 432.0, "axes": [], "height": 288.0, "id": "el61804661625688"});
-   }(mpld3);
-}else if(typeof define === "function" && define.amd){
-   // require.js is available: use it to load d3/mpld3
-   require.config({paths: {d3: "https://mpld3.github.io/js/d3.v3.min"}});
-   require(["d3"], function(d3){
-      window.d3 = d3;
-      mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3.js", function(){
-         
-         mpld3.draw_figure("fig_el618046616256886831320517", {"plugins": [{"type": "reset"}, {"button": true, "enabled": false, "type": "zoom"}, {"button": true, "enabled": false, "type": "boxzoom"}], "data": {}, "width": 432.0, "axes": [], "height": 288.0, "id": "el61804661625688"});
-      });
-    });
-}else{
-    // require.js not available: dynamically load d3 & mpld3
-    mpld3_load_lib("https://mpld3.github.io/js/d3.v3.min.js", function(){
-         mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3.js", function(){
-                 
-                 mpld3.draw_figure("fig_el618046616256886831320517", {"plugins": [{"type": "reset"}, {"button": true, "enabled": false, "type": "zoom"}, {"button": true, "enabled": false, "type": "boxzoom"}], "data": {}, "width": 432.0, "axes": [], "height": 288.0, "id": "el61804661625688"});
-            })
-         });
-}
-</script>
+![png](output_10_1.png)
 
 
-
-The mpld3 module we use here (__[documentation here](https://mpld3.github.io/index.html)__) allows you to explore this plot a little more than a standard plot. If you want to better see the distribution past 9, you can use the cross-looking button to drag the plot up to reveal the small bars. Then, use the zoom button (magnifying glass one) to zoom into that part of the plot. You can also hover your mouse over a bar to see its value on the Y-axis. When done, hit the home button to go back to the original graph.
-
-This plot is the visual representation of the Counter object printed out above it. This is very interesting -- it says that there are 2,220 whales that have just 1 image containing its tag; 1,034 whales have 2 images containing its tag; and so on all the way down to one tag containing 810 associated images! Which one is it? You might have guessed it by now but let's be sure:
+This plot is the visual representation of the Counter object printed out above it. Inset is the same plot on a log scale to help illustrate low end of the Y-axis. This is very interesting -- it says that there are 2,220 whales that have just 1 image containing its tag; 1,034 whales have 2 images containing its tag; and so on all the way down to one tag containing 810 associated images! Which one is it? You might have guessed it by now but let's be sure:
 
 
 ```python
 print(train_df['Id'].value_counts())
 ```
-
-    new_whale    810
-    w_1287fbc     34
-    w_98baff9     27
-    w_7554f44     26
-    w_1eafe46     23
-    w_fd1cb9d     22
-    w_ab4cae2     22
-    w_693c9ee     22
-    w_73d5489     21
-    w_987a36f     21
-    w_43be268     21
-    w_f19faeb     20
-    w_95874a5     19
-    w_9b401eb     19
-    w_b7d5069     18
-    ...
-    w_76c1200    1
-    w_30cf2ca    1
-    w_2085f2e    1
-    w_642de28    1
-    w_7b0fb1d    1
-    w_d6f3d24    1
-    w_42cc88d    1
-    w_6e5b022    1
-    w_6751cb2    1
-    w_9e4a26f    1
-    w_efaada7    1
-    w_e94a3b2    1
-    w_d937660    1
-    w_493c000    1
-    w_86431c7    1
-    Length: 4251, dtype: int64
-
 
 As expected, new_whale is the category with the overwhelming majority of tags. So we have a big problem...if we want to train a classifier to identify each of these whales, we'll need a lot more images for each whale! Even 34 is a low number, so we are going to want to augment our data in order to fill this out more.
 
@@ -231,10 +162,6 @@ for row in range(5):
         axes[row, col].xaxis.set_ticklabels([])
         axes[row, col].yaxis.set_ticklabels([])
 ```
-
-
-![png](output_15_0.png)
-
 
 So there's a number of things we can see from these first 25 images. First, they aren't all the same size dimensions. This implies we will either have to make a classifier that doesn't care about image size, or we'll have to standardize the dimensions of each image for proper comparison. 
 
