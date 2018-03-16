@@ -96,20 +96,42 @@ print(sorted(whale_dist.items()))
 ```python
 import matplotlib.pyplot as plt
 
-plt.figure(1, figsize=(10,7))
-plt.bar(range(len(whale_dist)), list(whale_dist.values()), align='center')
-plt.xticks(range(len(whale_dist)), list(whale_dist.keys()))
-plt.title('Distribution of whale labels in the training set')
-plt.xlabel('Number of images tagged')
-plt.ylabel('Number of labels')
-plt.show()
+N = len(whale_dist)
+vals = list(whale_dist.values())
+keys = list(whale_dist.keys())
+
+# Plot main bar graph:
+fig, ax1 = plt.subplots(figsize=(10,7))
+plt.title('Distribution of whale labels in the training set', fontsize=20)
+ax1.bar(range(N), vals, align='center')
+ax1.set_xticks(range(N))
+ax1.set_xticklabels(keys)
+ax1.set_xlabel('Number of images tagged', fontsize=15)
+ax1.set_ylabel('Number of labels', fontsize=15)
+
+# Plot the inset:
+left, bottom, width, height = [0.32, 0.4, 0.56, 0.4]
+ax2 = fig.add_axes([left, bottom, width, height])
+ax2.bar(range(N), vals, align='center')
+ax2.set_xticks(range(N))
+ax2.set_xticklabels(keys)
+ax2.set_yscale('log')
+ax2.set_xlabel('Number of images tagged', fontsize=10)
+ax2.set_ylabel('Number of labels, log scale', fontsize=10)
 ```
 
 
-![png](output_10_0.png)
 
 
-This plot is the visual representation of the Counter object printed out above it. This is very interesting -- it says that there are 2,220 whales that have just 1 image containing its tag; 1,034 whales have 2 images containing its tag; and so on all the way down to one tag containing 810 images! Which one is it? You might have guessed it by now but let's be sure:
+    Text(0,0.5,'Number of labels, log scale')
+
+
+
+
+![png](output_10_1.png)
+
+
+This plot is the visual representation of the Counter object printed out above it. Inset is the same plot on a log scale to help illustrate low end of the Y-axis. This is very interesting -- it says that there are 2,220 whales that have just 1 image containing its tag; 1,034 whales have 2 images containing its tag; and so on all the way down to one tag containing 810 associated images! Which one is it? You might have guessed it by now but let's be sure:
 
 
 ```python
@@ -121,38 +143,69 @@ print(train_df['Id'].value_counts())
     w_98baff9     27
     w_7554f44     26
     w_1eafe46     23
-    w_693c9ee     22
     w_fd1cb9d     22
+    w_693c9ee     22
     w_ab4cae2     22
     w_987a36f     21
-    w_73d5489     21
     w_43be268     21
+    w_73d5489     21
     w_f19faeb     20
-    w_95874a5     19
     w_9b401eb     19
-    w_c0d494d     18
+    w_95874a5     19
+    w_b7d5069     18
     ...
-    w_a34c992    1
-    w_136653f    1
-    w_8ae97a4    1
-    w_89ee7c1    1
-    w_b283b00    1
-    w_f9d27ad    1
-    w_80bae3a    1
-    w_5bc7e7f    1
-    w_8e93d0e    1
-    w_874cf52    1
-    w_55c9a3b    1
-    w_c241e72    1
-    w_a190aff    1
-    w_6b7d5ad    1
-    w_c102ec3    1
+    w_3e6a161    1
+    w_f843c4d    1
+    w_a5f6c33    1
+    w_44237e0    1
+    w_60ad873    1
+    w_8bc3f0a    1
+    w_d984eb7    1
+    w_ad512ec    1
+    w_4c8244d    1
+    w_5b08542    1
+    w_76048fe    1
+    w_719011d    1
+    w_c6bd2bb    1
+    w_a4da0b3    1
+    w_b638c8f    1
     Length: 4251, dtype: int64
 
 
-As expected, new_whale is the category with the overwhelming majority of tags. The next most common whale is w_1287fbc with 34 total images. So we have a big problem...if we want to train a classifier to identify each of these whales, we'll need a lot more images for each whale! Even 34 is a low number, so we are going to want to augment our data in order to fill this out more.
+As expected, new_whale is the category with the overwhelming majority of tags. So we have a big problem...if we want to train a classifier to identify each of these whales, we'll need a lot more images for each whale! Even 34 is a low number, so we are going to want to augment our data in order to fill this out more.
 
-Later, we'll discuss how we augment this dataset. For now, let's continue our exploration of the training data.
+Later, we'll discuss how we'll go about doing the augmentation of this dataset. For now, let's continue our exploration of the training data to see if there are other issues to consider.
+
+## Examining the images themselves
+
+Now that we have identified our first issue of needing to augment our image dataset, we should examine the images themselves. If they don't share specific properties like size dimensions, color scheme, etc. then we may run into additional issues. Let's load in some images and see what we find!
+
+
+```python
+import matplotlib.image as mpimg
+
+# Let's plot up the first 25 images in the training data set:
+image_names = np.reshape([str(i) for i in train_df.Image[0:25]], (5,5))
+image_id = np.reshape([str(j) for j in train_df.Id[0:25]], (5,5))
+fig, axes = plt.subplots(5,5, figsize=(16,12))
+for row in range(5):
+    for col in range(5):
+        img = mpimg.imread('{}train/{}'.format(PATH, image_names[row, col]))
+        axes[row, col].imshow(img, cmap='gray')
+        axes[row,col].set_title(image_id[row,col], fontsize=15)
+        axes[row, col].xaxis.set_ticklabels([])
+        axes[row, col].yaxis.set_ticklabels([])
+```
+
+
+![png](output_15_0.png)
+
+
+So there's a number of things we can see from these first 25 images. First, they aren't all the same size dimensions. This implies we will either have to make a classifier that doesn't care about image size, or we'll have to standardize the dimensions of each image for proper comparison. 
+
+Second, some of the images are in grayscale, but others are in color. That means our classifier will have to not care much about whether or not the image is in color, or we'll have to standardize all images to grayscale. It's likely a better approach to just test any given image for color, and then add the grayscaled version of it to the dataset as a separate image; this will help us in our augmentation step, since it adds more data to our sample. I'm not sure however if doing this will bias the classifier to misclassify whales in our sample that do not have originally have color if presented with a color version of the same whale. __[Another analysis](https://www.kaggle.com/mmrosenb/whales-an-exploration)__ points out that some of the images are actually in redscale rather than full color (or at least emphasizing the R portion of the image for some reason). This could complicate our coloring analysis further.
+
+Lastly, you can see the first image has a label section of sorts in the bottom portion of the image. The words in the label "HWC # 1034" doesn't seem to correlate with the whale's label. Having images with these arbitrary labels at the bottom could also further complicate things, though I am uncertain how we would go about removing them, especially since many of these labels (not shown in the figure) are very different.
 
 
 ```python
