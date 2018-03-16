@@ -95,43 +95,80 @@ print(sorted(whale_dist.items()))
 
 ```python
 import matplotlib.pyplot as plt
+import mpld3
 
 N = len(whale_dist)
 vals = list(whale_dist.values())
 keys = list(whale_dist.keys())
 
-# Plot main bar graph:
-fig, ax1 = plt.subplots(figsize=(10,7))
-plt.title('Distribution of whale labels in the training set', fontsize=20)
-ax1.bar(range(N), vals, align='center')
-ax1.set_xticks(range(N))
-ax1.set_xticklabels(keys)
-ax1.set_xlabel('Number of images tagged', fontsize=15)
-ax1.set_ylabel('Number of labels', fontsize=15)
+plt.figure(1, figsize=(10,7))
+barfig = plt.bar(range(N), vals, align='center')
 
-# Plot the inset:
-left, bottom, width, height = [0.32, 0.4, 0.56, 0.4]
-ax2 = fig.add_axes([left, bottom, width, height])
-ax2.bar(range(N), vals, align='center')
-ax2.set_xticks(range(N))
-ax2.set_xticklabels(keys)
-ax2.set_yscale('log')
-ax2.set_xlabel('Number of images tagged', fontsize=10)
-ax2.set_ylabel('Number of labels, log scale', fontsize=10)
+# Use mpld3 to add some interactivity:
+for i, bar in enumerate(barfig.get_children()):
+    tooltip = mpld3.plugins.LineLabelTooltip(bar, label=vals[i])
+    mpld3.plugins.connect(plt.gcf(), tooltip)
+
+# Make graph more readible:
+plt.xticks(range(N), keys)
+plt.title('Distribution of whale labels in the training set', fontsize=20)
+plt.xlabel('Number of images tagged', fontsize=15)
+plt.ylabel('Number of labels', fontsize=15)
+mpld3.display()
 ```
 
 
 
 
-    Text(0,0.5,'Number of labels, log scale')
+
+
+<style>
+
+</style>
+
+<div id="fig_el618046616256886831320517"></div>
+<script>
+function mpld3_load_lib(url, callback){
+  var s = document.createElement('script');
+  s.src = url;
+  s.async = true;
+  s.onreadystatechange = s.onload = callback;
+  s.onerror = function(){console.warn("failed to load library " + url);};
+  document.getElementsByTagName("head")[0].appendChild(s);
+}
+
+if(typeof(mpld3) !== "undefined" && mpld3._mpld3IsLoaded){
+   // already loaded: just create the figure
+   !function(mpld3){
+       
+       mpld3.draw_figure("fig_el618046616256886831320517", {"plugins": [{"type": "reset"}, {"button": true, "enabled": false, "type": "zoom"}, {"button": true, "enabled": false, "type": "boxzoom"}], "data": {}, "width": 432.0, "axes": [], "height": 288.0, "id": "el61804661625688"});
+   }(mpld3);
+}else if(typeof define === "function" && define.amd){
+   // require.js is available: use it to load d3/mpld3
+   require.config({paths: {d3: "https://mpld3.github.io/js/d3.v3.min"}});
+   require(["d3"], function(d3){
+      window.d3 = d3;
+      mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3.js", function(){
+         
+         mpld3.draw_figure("fig_el618046616256886831320517", {"plugins": [{"type": "reset"}, {"button": true, "enabled": false, "type": "zoom"}, {"button": true, "enabled": false, "type": "boxzoom"}], "data": {}, "width": 432.0, "axes": [], "height": 288.0, "id": "el61804661625688"});
+      });
+    });
+}else{
+    // require.js not available: dynamically load d3 & mpld3
+    mpld3_load_lib("https://mpld3.github.io/js/d3.v3.min.js", function(){
+         mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3.js", function(){
+                 
+                 mpld3.draw_figure("fig_el618046616256886831320517", {"plugins": [{"type": "reset"}, {"button": true, "enabled": false, "type": "zoom"}, {"button": true, "enabled": false, "type": "boxzoom"}], "data": {}, "width": 432.0, "axes": [], "height": 288.0, "id": "el61804661625688"});
+            })
+         });
+}
+</script>
 
 
 
+The mpld3 module we use here (__[documentation here](https://mpld3.github.io/index.html)__) allows you to explore this plot a little more than a standard plot. If you want to better see the distribution past 9, you can use the cross-looking button to drag the plot up to reveal the small bars. Then, use the zoom button (magnifying glass one) to zoom into that part of the plot. You can also hover your mouse over a bar to see its value on the Y-axis. When done, hit the home button to go back to the original graph.
 
-![png](output_10_1.png)
-
-
-This plot is the visual representation of the Counter object printed out above it. Inset is the same plot on a log scale to help illustrate low end of the Y-axis. This is very interesting -- it says that there are 2,220 whales that have just 1 image containing its tag; 1,034 whales have 2 images containing its tag; and so on all the way down to one tag containing 810 associated images! Which one is it? You might have guessed it by now but let's be sure:
+This plot is the visual representation of the Counter object printed out above it. This is very interesting -- it says that there are 2,220 whales that have just 1 image containing its tag; 1,034 whales have 2 images containing its tag; and so on all the way down to one tag containing 810 associated images! Which one is it? You might have guessed it by now but let's be sure:
 
 
 ```python
@@ -146,29 +183,29 @@ print(train_df['Id'].value_counts())
     w_fd1cb9d     22
     w_693c9ee     22
     w_ab4cae2     22
-    w_987a36f     21
     w_43be268     21
     w_73d5489     21
+    w_987a36f     21
     w_f19faeb     20
     w_9b401eb     19
     w_95874a5     19
     w_b7d5069     18
     ...
-    w_3e6a161    1
-    w_f843c4d    1
-    w_a5f6c33    1
-    w_44237e0    1
-    w_60ad873    1
-    w_8bc3f0a    1
-    w_d984eb7    1
-    w_ad512ec    1
-    w_4c8244d    1
-    w_5b08542    1
-    w_76048fe    1
-    w_719011d    1
-    w_c6bd2bb    1
-    w_a4da0b3    1
-    w_b638c8f    1
+    w_6e26345    1
+    w_72a1cd8    1
+    w_b99edea    1
+    w_2707bcd    1
+    w_afbc2d1    1
+    w_d4c25b6    1
+    w_17377c9    1
+    w_60c5ba0    1
+    w_94da90b    1
+    w_cc699e6    1
+    w_2941dd2    1
+    w_fdcfcea    1
+    w_afde232    1
+    w_16ad10e    1
+    w_9072f07    1
     Length: 4251, dtype: int64
 
 
