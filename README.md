@@ -138,6 +138,40 @@ This plot is the visual representation of the Counter object printed out above i
 print(train_df['Id'].value_counts())
 ```
 
+    new_whale    810
+    w_1287fbc     34
+    w_98baff9     27
+    w_7554f44     26
+    w_1eafe46     23
+    w_fd1cb9d     22
+    w_693c9ee     22
+    w_ab4cae2     22
+    w_987a36f     21
+    w_43be268     21
+    w_73d5489     21
+    w_f19faeb     20
+    w_9b401eb     19
+    w_95874a5     19
+    w_b7d5069     18
+    ...
+    w_3e6a161    1
+    w_f843c4d    1
+    w_a5f6c33    1
+    w_44237e0    1
+    w_60ad873    1
+    w_8bc3f0a    1
+    w_d984eb7    1
+    w_ad512ec    1
+    w_4c8244d    1
+    w_5b08542    1
+    w_76048fe    1
+    w_719011d    1
+    w_c6bd2bb    1
+    w_a4da0b3    1
+    w_b638c8f    1
+    Length: 4251, dtype: int64
+
+
 As expected, new_whale is the category with the overwhelming majority of tags. So we have a big problem...if we want to train a classifier to identify each of these whales, we'll need a lot more images for each whale! Even 34 is a low number, so we are going to want to augment our data in order to fill this out more.
 
 Later, we'll discuss how we'll go about doing the augmentation of this dataset. For now, let's continue our exploration of the training data to see if there are other issues to consider.
@@ -162,6 +196,10 @@ for row in range(5):
         axes[row, col].xaxis.set_ticklabels([])
         axes[row, col].yaxis.set_ticklabels([])
 ```
+
+
+![png](output_15_0.png)
+
 
 So there's a number of things we can see from these first 25 images. First, they aren't all the same size dimensions. This implies we will either have to make a classifier that doesn't care about image size, or we'll have to standardize the dimensions of each image for proper comparison. 
 
