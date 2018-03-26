@@ -146,33 +146,53 @@ print(train_df['Id'].value_counts())
     w_fd1cb9d     22
     w_693c9ee     22
     w_ab4cae2     22
-    w_987a36f     21
     w_43be268     21
     w_73d5489     21
+    w_987a36f     21
     w_f19faeb     20
     w_9b401eb     19
     w_95874a5     19
-    w_b7d5069     18
+    w_c0d494d     18
     ...
-    w_3e6a161    1
-    w_f843c4d    1
-    w_a5f6c33    1
-    w_44237e0    1
-    w_60ad873    1
-    w_8bc3f0a    1
-    w_d984eb7    1
-    w_ad512ec    1
-    w_4c8244d    1
-    w_5b08542    1
-    w_76048fe    1
-    w_719011d    1
-    w_c6bd2bb    1
-    w_a4da0b3    1
-    w_b638c8f    1
+    w_a4678de    1
+    w_35eb420    1
+    w_fa69bb8    1
+    w_f37508c    1
+    w_f283381    1
+    w_e5d6443    1
+    w_64d8a6d    1
+    w_8201c3f    1
+    w_62ec01b    1
+    w_f3865d6    1
+    w_a402e24    1
+    w_8ab8687    1
+    w_b2aa351    1
+    w_98b57a1    1
+    w_8e4fa60    1
     Length: 4251, dtype: int64
 
 
-As expected, new_whale is the category with the overwhelming majority of tags. So we have a big problem...if we want to train a classifier to identify each of these whales, we'll need a lot more images for each whale! Even 34 is a low number, so we are going to want to augment our data in order to fill this out more.
+As expected, new_whale is the category with the overwhelming majority of tags. So we have a big problem...if we want to train a classifier to identify each of these whales, we'll need a lot more images for each whale! Even 34 is a low number, so we are going to want to augment our data in order to fill this out more. To visualize this further, let's plot up a pie chart:
+
+
+```python
+# So many labels are unnecessary, just new_whale, so let's build the needed list:
+labels = ['']*len(train_df['Id'].value_counts())
+labels[0] = 'new_whale'
+
+# Now plot the pie chart:
+fig, ax = plt.subplots(figsize=(8,8))
+_ , texts = ax.pie(train_df['Id'].value_counts(), labels=labels)
+texts[0].set_size('x-large')  # Enlarge the label text for new_whale
+_ = plt.title('Distribution of whales across each label', fontsize=20)
+plt.show()
+```
+
+
+![png](output_14_0.png)
+
+
+As you can see in the above pie chart, new_whale is really the **only** ID label that makes up a significant percentage (roughly 8.2% as it turns out) of the full training data. 
 
 Later, we'll discuss how we'll go about doing the augmentation of this dataset. For now, let's continue our exploration of the training data to see if there are other issues to consider.
 
@@ -198,14 +218,103 @@ for row in range(5):
 ```
 
 
-![png](output_15_0.png)
+![png](output_17_0.png)
 
 
 So there's a number of things we can see from these first 25 images. First, they aren't all the same size dimensions. This implies we will either have to make a classifier that doesn't care about image size, or we'll have to standardize the dimensions of each image for proper comparison. 
 
-Second, some of the images are in grayscale, but others are in color. That means our classifier will have to not care much about whether or not the image is in color, or we'll have to standardize all images to grayscale. It's likely a better approach to just test any given image for color, and then add the grayscaled version of it to the dataset as a separate image; this will help us in our augmentation step, since it adds more data to our sample. I'm not sure however if doing this will bias the classifier to misclassify whales in our sample that do not have originally have color if presented with a color version of the same whale. __[Another analysis](https://www.kaggle.com/mmrosenb/whales-an-exploration)__ points out that some of the images are actually in redscale rather than full color (or at least emphasizing the R portion of the image for some reason). This could complicate our coloring analysis further.
+Second, some of the images are in grayscale, but others are in color. That means our classifier will have to not care much about whether or not the image is in color, or we'll have to standardize all images to grayscale. It's likely a better approach to just test any given image for color, and then add the grayscaled version of it to the dataset as a separate image; this will help us in our augmentation step, since it adds more data to our sample. I'm not sure however if doing this will bias the classifier to misclassify whales in our sample that do not have originally have color if presented with a color version of the same whale.
 
 Lastly, you can see the first image has a label section of sorts in the bottom portion of the image. The words in the label "HWC # 1034" doesn't seem to correlate with the whale's label. Having images with these arbitrary labels at the bottom could also further complicate things, though I am uncertain how we would go about removing them, especially since many of these labels (not shown in the figure) are very different.
+
+## Grayscale images vs. color images
+
+As illustrated above, some of the images in our dataset appear to be color, while others are in grayscale. So what are the statistics on this? Are most in color or in grayscale? Let's build a grayscale testing function and see:
+
+
+```python
+from PIL import Image
+
+def is_gray_scale(img_path, num=0):
+    """Thanks to Lex Toumbourou and Stack Overflow.
+    
+    This function will convert the image into RGB filters. If the image
+    is grayscale, then it will have identical values in each filter. So
+    we will loop through and check for pixel differences...if we hit a
+    difference, stop since it's color and return 0. As such, grayscale
+    images will take much longer depending on the image size, as all
+    pixels must be tested.
+    
+    If you wish to test a large number of images in a loop, I added a num 
+    value (with a commented out print statement) that can help you see
+    where you are in the loop. This is useful in a terminal, as I have 
+    never been able to get this to print in a notebook in real time 
+    (hence the commenting out). 
+    
+    """
+    im = Image.open(img_path).convert('RGB')
+    #print(num+1)
+    w,h = im.size   # Looping through each pixel in image and testing if r=b=g. If not, it's color.
+    for i in range(w):
+        for j in range(h):
+            r,g,b = im.getpixel((i,j))
+            if r != g != b: return 0    # If color, stop here and return 0
+    return 1
+```
+
+When we test our data for color images or grayscale images, we have to be careful about bias. Because there are so many images (9850 total), it would take a very long time to test them all. So we can save time by pulling a random sample of them and using it to draw conclusions about the whole dataset. If the distribution of whales were roughly equal across all labels, we could be more comfortable testing from a completely random sample so long as it's large enough to capture whales across the distribution and not too small to potentially sample only a few labels.
+
+However, we **don't** have an even distribution. A full 810/9850 x 100 = 8.2% of our images are of the "new_whale" category, while the next highest label is 34/9850 x 100 = 0.35% of the sample. Most whales in our sample have only 1 image, constituting 1/9850 x 100 = 0.01% of the sample. To help avoid bias, we recommend pulling from our largest label(s) at a percentage appropriate to make sure most labels are included but not over/under represented.
+
+So we will make sure that 8.2% of our random sample is made up of whales with no ID. We could continue this for each other category, but given the small percentages of the others, that would be unnecessary. We will use 20% of our data to try and get a good representation of the dataset as a whole.
+
+
+```python
+import random
+twenty_perc = round(0.20*len(train_df.Image))
+num_new_whales = round(0.082*0.20*len(train_df.Image))
+num_other_whales = twenty_perc - num_new_whales
+gray_new_whales = [is_gray_scale('{}train/{}'.format(PATH, val), num=i) 
+                      for i, val in enumerate(random.sample(
+                          list(train_df.Image.loc[train_df.Id == 'new_whale']), num_new_whales))]
+gray_other_whales = [is_gray_scale('{}train/{}'.format(PATH, val), num=i) 
+                      for i, val in enumerate(random.sample(
+                          list(train_df.Image.loc[train_df.Id != 'new_whale']), num_other_whales))]
+total_gray = sum(gray_new_whales) + sum(gray_other_whales)
+perc_gray = total_gray*100 / (num_new_whales + num_other_whales)
+print(perc_gray)
+
+# NOTE: I shouldn't need to use the random module, since pandas version 0.22.0 (which we are using)
+#       has a .sample() method for Series and Dataframe objects, but for some reason it's not working
+#       for me. So I used this workaround instead. Using .sample() and specifying the keyword n for number
+#       of entries (e.g., n=num_new_whales) would be much cleaner.
+```
+
+    50.15228426395939
+
+
+We find that our sub-sample of the data (20% given our time constraints) is 50.2% grayscale. We ran the entire sample outside of this notebook just to back up our claims that this is representative of the full sample, and we indeed found a value of 49.9% of the total data is grayscale. So in both cases, we obtained a value close to 50%, so about half of our training dataset is in color and half is in grayscale. This is useful for us to know when we go about our data augmentation later in this notebook.
+
+A quick note: if our data's new_whale label subset is representative of the total distribution, then we would not have had to consider our random sample so carefully, as an overrepresentation would not have changed the overall outcome. Let's see if this was in fact the case, since this won't take too much computation time:
+
+
+```python
+gray_new_whale_only = [is_gray_scale('{}train/{}'.format(PATH, str(val)), num=i) 
+                  for i, val in enumerate(train_df.Image.loc[train_df.Id == 'new_whale'])]
+perc_gray_new = sum(gray_new_whale_only)*100 / len(gray_new_whale_only)
+print(perc_gray_new)
+```
+
+    51.23456790123457
+
+
+We can see here that the new_whale label does not feature any bias with regards to color/grayscale compared to the full dataset, as they both are approximately half color and half grayscale. So had we ignored the potential for overrepresentation, our statistics would not have changed. However, in this dataset, we had no reason to suspect this would be the case, and so the caution we used is the best course of action (in our opinion). If you have a sample where you already know this is the case, then by all means just take a random sample without trying to force relevant representation.
+
+All in all, this is just a warning of the potential problems you can get when you test a subsample of your data to draw conclusions about the larger dataset, as over- (and under-) sampling a category can introduce a bias if that category is significantly different than the full dataset. In this case, our largest category is not different (with respect to image coloring) than the rest of the sample, so we were not in danger. But we checked anyway to be sure, and recommend this practice generally.
+
+## Size distribution of our training set
+
+(Coming soon)
 
 
 ```python
