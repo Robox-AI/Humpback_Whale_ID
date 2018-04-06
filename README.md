@@ -143,32 +143,32 @@ print(train_df['Id'].value_counts())
     w_98baff9     27
     w_7554f44     26
     w_1eafe46     23
+    w_ab4cae2     22
     w_fd1cb9d     22
     w_693c9ee     22
-    w_ab4cae2     22
-    w_43be268     21
     w_73d5489     21
     w_987a36f     21
+    w_43be268     21
     w_f19faeb     20
     w_9b401eb     19
     w_95874a5     19
-    w_c0d494d     18
+    w_b7d5069     18
     ...
-    w_a4678de    1
-    w_35eb420    1
-    w_fa69bb8    1
-    w_f37508c    1
-    w_f283381    1
+    w_36eb0b1    1
+    w_157ba16    1
+    w_bbf6ebf    1
+    w_3aa1da4    1
+    w_e44d512    1
+    w_a8458c8    1
+    w_8329cea    1
+    w_4a81594    1
+    w_d3a5075    1
+    w_91c0a1d    1
+    w_21dfc18    1
     w_e5d6443    1
-    w_64d8a6d    1
-    w_8201c3f    1
-    w_62ec01b    1
-    w_f3865d6    1
-    w_a402e24    1
-    w_8ab8687    1
-    w_b2aa351    1
-    w_98b57a1    1
-    w_8e4fa60    1
+    w_0981144    1
+    w_4142305    1
+    w_fcdc898    1
     Length: 4251, dtype: int64
 
 
@@ -290,10 +290,10 @@ print(perc_gray)
 #       of entries (e.g., n=num_new_whales) would be much cleaner.
 ```
 
-    50.15228426395939
+    49.08629441624365
 
 
-We find that our sub-sample of the data (20% given our time constraints) is 50.2% grayscale. We ran the entire sample outside of this notebook just to back up our claims that this is representative of the full sample, and we indeed found a value of 49.9% of the total data is grayscale. So in both cases, we obtained a value close to 50%, so about half of our training dataset is in color and half is in grayscale. This is useful for us to know when we go about our data augmentation later in this notebook.
+We find that our sub-sample of the data (20% given our time constraints) is about 50% grayscale. We ran the entire sample outside of this notebook just to back up our claims that this is representative of the full sample, and we indeed found a value of 49.9% of the total data is grayscale. So in both cases, we obtained a value close to 50%, so about half of our training dataset is in color and half is in grayscale. This is useful for us to know when we go about our data augmentation later in this notebook.
 
 A quick note: if our data's new_whale label subset is representative of the total distribution, then we would not have had to consider our random sample so carefully, as an overrepresentation would not have changed the overall outcome. Let's see if this was in fact the case, since this won't take too much computation time:
 
@@ -314,7 +314,124 @@ All in all, this is just a warning of the potential problems you can get when yo
 
 ## Size distribution of our training set
 
-(Coming soon)
+Now we should check on the size distribution of our images. As previously noted, there are images in our dataset with different size ratios, and this could impact our analysis. So how different are they?
+
+
+```python
+# Find the image sizes and store them in the training dataframe:
+image_sizes = [Image.open('{}train/{}'.format(PATH, img)).size for img in train_df.Image]
+train_df['image_size'] = pd.Series(image_sizes, index=train_df.index)
+
+# Find the size frequency:
+train_df.image_size.value_counts()
+```
+
+
+
+
+    (1050, 600)    1113
+    (1050, 700)     951
+    (1050, 450)     409
+    (1050, 525)     371
+    (700, 500)      200
+    (1000, 667)     122
+    (1050, 630)     114
+    (1000, 652)      85
+    (900, 600)       72
+    (1050, 599)      44
+    (700, 400)       41
+    (1050, 591)      37
+    (1050, 750)      32
+    (1050, 347)      24
+    (1050, 384)      21
+    ...
+    (641, 427)     1
+    (930, 620)     1
+    (454, 259)     1
+    (706, 487)     1
+    (1004, 510)    1
+    (851, 288)     1
+    (439, 172)     1
+    (939, 365)     1
+    (699, 489)     1
+    (1000, 365)    1
+    (978, 391)     1
+    (990, 498)     1
+    (417, 179)     1
+    (820, 434)     1
+    (789, 526)     1
+    Length: 2587, dtype: int64
+
+
+
+So we can see here that the image size distribution seems to resemble the distribution of the whale ID frequency -- that is, some sizes are very common, and others are not. Let's plot it up to get a better idea of how it's distributed.
+
+
+```python
+size_dist = sorted(Counter(train_df['image_size'].value_counts().values).items())
+
+N = len(size_dist)
+vals = np.empty(N)
+keys = np.empty(N)
+for ind, item in enumerate(size_dist):
+    vals[ind] = item[1]
+    keys[ind] = item[0]
+
+# Plot main bar graph:
+fig, ax1 = plt.subplots(figsize=(10,8))
+plt.title('Distribution of Image Sizes in the training set', fontsize=20)
+ax1.bar(range(N), vals, align='center')
+ax1.set_xticks(range(N))
+ax1.set_xticklabels(keys.astype(int), rotation=60)
+ax1.set_xlabel('Number of Images of a Given Size (Size Frequency)', fontsize=16)
+ax1.set_ylabel('Number of Sizes', fontsize=16)
+
+# Plot the inset:
+left, bottom, width, height = [0.30, 0.35, 0.56, 0.45]
+ax2 = fig.add_axes([left, bottom, width, height])
+ax2.bar(range(N), vals, align='center')
+ax2.set_xticks(range(N))
+ax2.set_xticklabels(keys.astype(int), rotation=70)
+ax2.set_yscale('log')
+ax2.set_xlabel('Number of Images of a Given Size (Size Frequency)', fontsize=12)
+ax2.set_ylabel('Number of Sizes (log scale)', fontsize=12)
+plt.show()
+```
+
+
+![png](output_29_0.png)
+
+
+This might be a tough plot to understand: on the x axis you have the size frequency and on the y axis you have the number of sizes corresponding to that frequency. So for example, there are over 1700 unique sizes (sizes having only one image corresponding to it), but there is only one size that has 1113 images corresponding to it. The major takeaways from this plot are that a majority of image sizes have 30 or fewer images that correspond to that size, and that the two most common sizes make up roughly 2000 of the images in our sample. The table above shows what those sizes are, namely 1050 by 600 and 1050 by 700.
+
+All in all, this means that if we decide to make all of our images uniform in shape, we will have to alter the vast majority of images in the sample. So if we want to make them all 1050 by 600, we'd have to alter (9850 - 1113) = 8737 images. Let's get an idea of the range of sizes themselves so we can see if 1050 by 600 is smaller or larger than most other size options in our dataset:
+
+
+```python
+# Separate the X and Y dimensions of each image:
+x_size = np.empty(9850)
+y_size = np.empty(9850)
+for index, size in enumerate(train_df.image_size.values):
+    x_size[index] = size[0]
+    y_size[index] = size[1]
+
+# Plot up histograms for the different sizes:
+fig, ax1 = plt.subplots(figsize=(10,8))
+_ = ax1.hist(x_size, bins=20, alpha=0.5, label='x dimension')
+_ = ax1.hist(y_size, bins=20, alpha=0.5, label='y dimension')
+_ = ax1.set_xlabel('Size (Pixel Number)', fontsize=16)
+_ = ax1.set_ylabel('Number of Images (Log Scale)', fontsize=16)
+_ = ax1.set_yscale('log')
+_ = ax1.legend(fontsize=14)
+_ = plt.title('Distribution of X and Y Image Sizes', fontsize=20)
+plt.show()
+```
+
+
+![png](output_31_0.png)
+
+
+Recall that the most common dimensions are (1050, 600). In this plot, we see that 1050 is the high end of the range of x dimensions, so if we changed all the images to be 1050 by 600, the x dimension of an image will be streched out. However, for the y dimension, 600 lies in the distribution such that there are a fair number of images with greater (or much greater) pixel number, so some will be shrunk in the y dimension. This could lead to some interesting distortions within the images.
 
 
 ```python
